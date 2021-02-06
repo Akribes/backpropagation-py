@@ -1,6 +1,6 @@
 import math
 
-weights = [
+weights = [  # TODO reverse from and to, so I can remove bias weights easily using [:-1]
     [
         [0, 0, 0],
         [0, 0, 0],
@@ -21,11 +21,12 @@ derivatives = [
     []
 ]
 
-loss = 0
-
 
 def C(y, x):
-    return y - x
+    res = []
+    for i in range(len(y)):
+        res.append(y[i] - x[i])
+    return res
 
 
 def f(x):
@@ -51,7 +52,6 @@ def f_deriv_vector(x):
 
 
 def multiply_matrices(A, B):
-    print("Multiplying", A, "and", B)
     if len(A[0]) != len(B):
         raise ValueError("Matrix sizes do not match")
     res = [[0] * len(B[0]) for i in range(len(A))]
@@ -64,7 +64,6 @@ def multiply_matrices(A, B):
 
 
 def transpose_matrix(A):
-    print("Transposing", A)
     AT = [[0] * len(A) for i in range(len(A[0]))]
 
     for j in range(len(A)):
@@ -76,21 +75,45 @@ def transpose_matrix(A):
 
 def propagate(x):
     for i in range(len(weights)):
-        o = None
         if i == 0:
-            o = x[:]
-            print(o)
+            o = x[:]  # TODO set these values as the activation of the first layer
         else:
             o = activation[i - 1]
         o.append(1)  # bias
 
         z = transpose_matrix([o])
         z = multiply_matrices(weights[i], z)
-        print("Weighted inputs", z)
         activation[i] = f_vector(z)
         derivatives[i] = f_deriv_vector(z)
 
     return activation[-1]  # return output
 
 
-print(propagate([1, 2]))
+def backpropagate(y):
+    errors = [
+        [],
+        []
+    ]
+
+    errors[1] = C(y, activation[-1])
+
+    i = 0
+    while i >= 0:
+        errors[i] = multiply_matrices(derivatives[i], transpose_matrix(weights[i + 1][:-1]))  # [:-1] removes bias weight
+        print("Errors for layer", i, "are", errors[i])
+        i -= 1
+
+
+def main():
+    data = [
+        [[0, 0], [0]],
+        [[0, 1], [1]],
+        [[1, 0], [1]],
+        [[1, 1], [0]]
+    ]
+    print(propagate(data[0][0]), activation, derivatives)
+    backpropagate(data[0][1])
+
+
+if __name__ == "__main__":
+    main()
